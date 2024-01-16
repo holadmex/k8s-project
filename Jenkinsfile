@@ -9,11 +9,6 @@ pipeline{
         registryCredential = 'Docker-login'
     }
     stages {
-        stage ('FETCH THE CODE FROM GITHUB') {
-            steps{
-                git branch: 'main', credentialsId: 'git-login', url: 'git@github.com:holadmex/k8s-project.git'
-            }
-        }
         stage ('BUILD THE CODE') {
             steps{
                 sh 'mvn clean install -DskipTest'
