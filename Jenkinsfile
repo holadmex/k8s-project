@@ -10,7 +10,6 @@ pipeline {
         registry = "holadmex/vproappdock"
         registryCredential = 'Docker-login'
     }
-
     stages{
 
         stage('BUILD'){
