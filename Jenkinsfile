@@ -4,7 +4,7 @@ pipeline{
         jdk 'JDK'
         maven 'Maven'
     }
-    enviroment {
+    environment {
         registry = "holadmex/vproappdock"
         registryCredential = 'Docker-login'
     }
@@ -82,5 +82,6 @@ pipeline{
             steps{
                 sh "helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:V${$BUILD_NUMBER} --namespace prod"
             }
+        }    
     }
-}        
+       
