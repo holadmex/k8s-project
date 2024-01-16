@@ -7,7 +7,6 @@ pipeline {
     }
 */
     environment {
-        environment {
         registry = "holadmex/vproappdock"
         registryCredential = 'Docker-login'
     }
