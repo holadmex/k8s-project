@@ -1,40 +1,61 @@
-pipeline{
+pipeline {
+
     agent any
-    tools {
-        jdk 'JDK'
-        maven 'Maven'
+/*
+	tools {
+        maven "Maven"
     }
+*/
     environment {
+        environment {
         registry = "holadmex/vproappdock"
         registryCredential = 'Docker-login'
     }
-    stages {
-        stage ('BUILD THE CODE') {
-            steps{
-                sh 'mvn clean install -DskipTest'
+
+    stages{
+
+        stage('BUILD'){
+            steps {
+                sh 'mvn clean install -DskipTests'
             }
             post {
                 success {
-                    echo 'Archiving artifacts now.'
-                    archiveArtifacts artifacts: '**/*.war'
+                    echo 'Now Archiving...'
+                    archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
         }
-        stage ('UNIT TEST') {
-            steps{
+
+        stage('UNIT TEST'){
+            steps {
                 sh 'mvn test'
             }
         }
-        stage ('Checkstyle Analysis') {
-            steps{
-                sh 'mvn checkstyle:checkstyle'
+
+        stage('INTEGRATION TEST'){
+            steps {
+                sh 'mvn verify -DskipUnitTests'
             }
         }
-        stage ('Sonar Analysis') {
+
+        stage ('CODE ANALYSIS WITH CHECKSTYLE'){
+            steps {
+                sh 'mvn checkstyle:checkstyle'
+            }
+            post {
+                success {
+                    echo 'Generated Analysis Result'
+                }
+            }
+        }
+
+        stage('CODE ANALYSIS with SONARQUBE') {
+
             environment {
                 scannerHome = tool 'sonarqube'
             }
-            steps{
+
+            steps {
                 withSonarQubeEnv('sonar') {
                     sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=projectanalysis \
                    -Dsonar.projectName=projectanalysis \
@@ -45,14 +66,39 @@ pipeline{
                    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
                    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
                 }
-            }
-        }
-        stage ('Quality Gate') {
-            steps{
-                timeout(time: 2, unit: 'MINUTES') {
-                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-                    // true = set pipeline to UNSTABLE, false = don't
+
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
-                }    
+                }
             }
         }
+        stage('Build App Image') {
+            steps {
+                script {
+                  dockerImage = docker.build registry + ":V$BUILD_NUMBER"
+             }
+        }
+        stage('Upload image') {
+            steps {
+                script {
+                    docker.withRegistry('', registryCredential) {
+                        docker.Image.push("V$BUILD_NUMBER")
+                        docker.Image.push('latest')
+                    }
+                }
+            }
+        }
+        stage('Remove Unused docker image')
+            steps{
+                sh " docker rmi $registry:V$BUILD_NUMBER"
+          }     
+        }
+        stage ('Kubernetes Deploy')
+            agent { label 'KOPS'}
+                steps{
+                    sh "helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:V${$BUILD_NUMBER} --namespace prod"
+            }
+        }    
+    }
+}    
+       
