@@ -1,16 +1,22 @@
 pipeline {
 
     agent any
-/*
+
 	tools {
         maven "Maven"
     }
-*/
+
     environment {
         registry = "holadmex/vproappdock"
         registryCredential = 'Docker-login'
     }
     stages{
+
+        stage ('FETCH THE CODE FROM GITHUB') {
+            steps{
+                git branch: 'main', credentialsId: 'git-token', url: 'https://github.com/holadmex/k8s-project.git'
+            }
+        }
 
         stage('BUILD'){
             steps {
