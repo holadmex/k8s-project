@@ -54,9 +54,9 @@ pipeline {
             }
 
             steps {
-                withSonarQubeEnv('sonar') {
-                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=projectanalysis \
-                   -Dsonar.projectName=projectanalysis \
+                withSonarQubeEnv('sonar-env') {
+                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=kops-pro \
+                   -Dsonar.projectName=kops-pro \
                    -Dsonar.projectVersion=1.0 \
                    -Dsonar.sources=src/ \
                    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
