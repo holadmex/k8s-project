@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         registry = "holadmex/vproappdock"
-        registryCredential = 'Docker-login'
+        registryCredential = 'docker-login'
     }
     stages{
 
